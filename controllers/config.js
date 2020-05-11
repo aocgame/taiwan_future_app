@@ -1,6 +1,12 @@
-const ExchangeInfosModel = require("../modules/exchange_infos");
+"use strict";
+
+const ExchangeInfos = require("../services/exchange-infos");
 
 class ConfigController {
+  /**
+   * 基本配置
+   * @param {*} ctx
+   */
   static async config(ctx) {
     ctx.body = {
       supports_search: true,
@@ -10,7 +16,7 @@ class ConfigController {
       supports_time: true,
       exchanges: [
         { value: "", name: "所有交易市场", desc: "" },
-        ...(await ExchangeInfosModel.getAll()),
+        ...(await ExchangeInfos.getAll()),
       ],
       symbols_types: [
         { value: "", name: "所有种类" },
@@ -37,6 +43,10 @@ class ConfigController {
     };
   }
 
+  /**
+   * 伺服器时间
+   * @param {*} ctx
+   */
   static time(ctx) {
     ctx.body = (Date.now() / 1000) | 0;
   }

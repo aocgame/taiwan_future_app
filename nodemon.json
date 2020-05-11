@@ -16,10 +16,7 @@
   ],
   "env": {
     "NODE_ENV": "development",
-    "DB_HOST": "localhost",
-    "DB_USERNAME": "root",
-    "DB_NAME": "stock",
-    "DB_PASSWORD": ""
+    "REMOTE_ADDR": ""
   },
   "ext": "js,json"
 }

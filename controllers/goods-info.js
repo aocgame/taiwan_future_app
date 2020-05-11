@@ -1,17 +1,23 @@
+"use strict";
+
 const moment = require("moment");
-const BarDataDaysModel = require("../modules/bar_data_days");
-const BarDataTickssModel = require("../modules/bar_data_ticks");
-const ExchangeGoodsInfosModel = require("../modules/exchange_goods_infos");
-const ExchangeInfosModel = require("../modules/exchange_infos");
+const BarDataDays = require("../services/bar-data-days");
+const BarDataTickss = require("../services/bar-data-ticks");
+const ExchangeGoodsInfos = require("../services/exchange-goods-infos");
+const ExchangeInfos = require("../services/exchange-infos");
 
 class GoodsInfoController {
+  /**
+   * 商品详情
+   * @param {*} ctx
+   */
   static async symbols(ctx) {
     // https://b.aitrade.ga/books/tradingview/book/Symbology.html
 
     // todo http://www.hihubs.com/article/340
     const symbol_attr = ctx.query.symbol.split(":");
     const { length, last = length - 1 } = symbol_attr;
-    const goods_info = await ExchangeGoodsInfosModel.getInfoByWhere(
+    const goods_info = await ExchangeGoodsInfos.getInfoByWhere(
       { symbol: symbol_attr[last] },
       [
         "exchange_info_id",
@@ -30,7 +36,7 @@ class GoodsInfoController {
       throw new Error(`unknown_symbol ${ctx.query.symbol}`);
     }
 
-    const exchange_info = await ExchangeInfosModel.getInfoByWhere(
+    const exchange_info = await ExchangeInfos.getInfoByWhere(
       { id: goods_info.dataValues.exchange_info_id },
       [["symbol", "exchange-traded"], ["symbol", "exchange-listed"], "timezone"]
     );
@@ -50,8 +56,8 @@ class GoodsInfoController {
       minmov2: 0,
       pricescale: 100,
       pointvalue: 1,
-      session: "0930-1630", // 商品交易时间(7*24小时)  24x7
-      has_intraday: false, // 布尔值显示商品是否具有日内（分钟）历史数据
+      session: "1500-1345",
+      has_intraday: true, // 布尔值显示商品是否具有日内（分钟）历史数据
       has_no_volume: false,
       type: "", // 仪表的可选类型:stock, index, forex, futures, bitcoin, expression, spread, cfd
       // 这是一个包含日内分辨率(分钟单位)的数组
@@ -83,6 +89,10 @@ class GoodsInfoController {
     };
   }
 
+  /**
+   * 商品标记列表
+   * @param {*} ctx
+   */
   static marks(ctx) {
     // 替 K 线上加个标记
     ctx.body = {
@@ -119,6 +129,11 @@ class GoodsInfoController {
       ],
     };
   }
+
+  /**
+   * 大事件列表
+   * @param {*} ctx
+   */
   static timescale_marks(ctx) {
     ctx.body = [
       // { id: "tsm1", time: 1587945600, color: "red", label: "A", tooltip: "" },
@@ -152,7 +167,11 @@ class GoodsInfoController {
       // },
     ];
   }
-  // static async history(ctx) {
+
+  /**
+   * 历史数据
+   * @param {*} ctx
+   */
   static async history(ctx) {
     ctx.body = {
       t: [],
@@ -161,21 +180,23 @@ class GoodsInfoController {
       l: [],
       c: [],
       v: [],
-      s: "ok",
+      s: "no_data",
     };
 
     let resolution = ctx.query.resolution.toUpperCase();
-    let { length, last = length - 1 } = resolution;
+    // 分钟频率
+    let is_minutes = !isNaN(resolution);
+
     let {
       last_time,
       session,
-    } = await ExchangeGoodsInfosModel.getResolutionsUpdatedBySymbol(
+    } = await ExchangeGoodsInfos.getResolutionsUpdatedBySymbol(
       ctx.query.symbol,
-      resolution.substr(last, 1)
+      resolution
     );
 
     if (last_time <= ctx.query.from) {
-      // 若是开始时间大于最新时间，就返回没有数据
+      // 若是开始时间大于最新时间，或是超出范围，就返回没有数据
       return (ctx.body = {
         s: "no_data",
         nextTime: last_time,
@@ -183,36 +204,38 @@ class GoodsInfoController {
     }
 
     let data;
-    let minutes = false;
-    switch (resolution.substr(last, 1)) {
-      case "D":
-        data = await BarDataDaysModel.getHistory(
-          ctx.query.symbol,
-          ctx.query.from,
-          ctx.query.to
-        );
-        break;
+    if (is_minutes) {
+      data = await BarDataTickss.getHistory(
+        ctx.query.symbol,
+        resolution,
+        ctx.query.from,
+        ctx.query.to
+      );
+    } else {
+      let { length, last = length - 1 } = resolution;
+      switch (resolution[last]) {
+        case "D":
+          data = await BarDataDays.getHistory(
+            ctx.query.symbol,
+            ctx.query.from,
+            ctx.query.to
+          );
+          break;
 
-      default:
-        minutes = true;
-        data = await BarDataTickssModel.getHistory(
-          ctx.query.symbol,
-          ctx.query.from,
-          ctx.query.to
-        );
-        break;
+        default:
+          throw new Error("不支持该频率");
+      }
     }
 
     if (data.length) {
-      if (!minutes) {
-        minutes = ` ${session.substr(0, 2)}:${session.substr(2, 2)}:00`;
-      }
+      let minutes = ` ${session.substr(0, 2)}:${session.substr(2, 2)}:00`;
       data.map((res) => {
         let dataValue = res.dataValues;
         let datetime = dataValue.date;
-        if (minutes === true) {
+        if (is_minutes === true) {
           datetime += " " + dataValue.time;
         } else {
+          // 把日线以上的数据调整到开盘时间
           datetime += minutes;
         }
         ctx.body.t.push(moment(datetime).unix());
@@ -222,6 +245,7 @@ class GoodsInfoController {
         ctx.body.c.push(dataValue.closePrice);
         ctx.body.v.push(dataValue.volume);
       });
+      ctx.body.s = "ok";
     }
   }
 }

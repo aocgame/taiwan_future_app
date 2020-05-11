@@ -1,13 +1,11 @@
 .DS_Store
 node_modules
 /dist
+/runtime/*/*
 
 # local env files
 .env.local
 .env.*.local
-
-# Log files
-npm-debug.log*
 
 # Editor directories and files
 .idea

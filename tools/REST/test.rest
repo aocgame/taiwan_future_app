@@ -52,9 +52,9 @@ Accept: {{Accept}}
 # @name history
 GET {{baseUrl}}/history
     ?symbol=FITXN
+    &from=1580743800
+    &to=1588743900
     &resolution=1
-    &from=1588101100
-    &to=1588271100
 Content-Type: application/json
 User-Agent: {{userAgent}}
 Accept: {{Accept}}

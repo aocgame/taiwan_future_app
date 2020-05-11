@@ -1,14 +1,13 @@
-// 引入刚刚建立连接mysql数据库的db.js文件
-const { sequelize } = require("../config/db");
-// 引入上一步的数据表模型文件
-const ExchangeGoodsInfos = sequelize.import("../schema/exchange_goods_infos");
-// 自动创建表
-// ExchangeGoodsInfos.sync({ force: false });
+"use strict";
+
+const ExchangeGoodsInfosModels = require("../models/index").getModel(
+  "exchange_goods_infos"
+);
 const moment = require("moment");
 
-class ExchangeGoodsInfosModel {
+class ExchangeGoodsInfos {
   static async getInfoByWhere(where, attributes = null) {
-    return await ExchangeGoodsInfos.findOne({
+    return await ExchangeGoodsInfosModels.findOne({
       where,
       attributes,
     });
@@ -20,14 +19,16 @@ class ExchangeGoodsInfosModel {
       throw new Error("找不到商品");
     }
 
-    let resolution_transfrom = {
-      H: "exectimeH1",
-      D: "exectimeD1",
-      W: "",
-      M: "exectimeM1",
-      Y: "exectimeY1",
-    };
-    let resolution_field = resolution_transfrom[resolution];
+    let resolution_field;
+    if (isNaN(resolution)) {
+      // 非分钟频率
+      let map = {
+        H: "exectimeH1",
+        D: "exectimeD1",
+      };
+      let { length, last = length - 1 } = resolution;
+      resolution_field = map[resolution[last]];
+    }
     if (!resolution_field) {
       resolution_field = "exectimeT1";
     }
@@ -40,4 +41,4 @@ class ExchangeGoodsInfosModel {
   }
 }
 
-module.exports = ExchangeGoodsInfosModel;
+module.exports = ExchangeGoodsInfos;

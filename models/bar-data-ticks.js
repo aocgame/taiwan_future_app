@@ -1,6 +1,8 @@
-module.exports = function(sequelize, DataTypes) {
+"use strict";
+
+module.exports = (sequelize, DataTypes) => {
   let BarData = sequelize.define(
-    "bar_data_days",
+    "bar_data_ticks",
     {
       date: {
         type: DataTypes.DATEONLY(),
@@ -9,6 +11,22 @@ module.exports = function(sequelize, DataTypes) {
         field: "date",
         comment: "记录日期",
         defaultValue: false,
+      },
+      time: {
+        type: DataTypes.TIME(),
+        allowNull: false,
+        primaryKey: true,
+        field: "time",
+        comment: "记录时间",
+        defaultValue: false,
+      },
+      interval: {
+        type: DataTypes.SMALLINT(5).UNSIGNED,
+        allowNull: false,
+        primaryKey: true,
+        field: "interval",
+        comment: "周期(分)",
+        defaultValue: 1,
       },
       volume: {
         type: DataTypes.MEDIUMINT(8).UNSIGNED,
@@ -43,7 +61,7 @@ module.exports = function(sequelize, DataTypes) {
       },
     },
     {
-      comment: "每日频率数据表",
+      comment: "分钟频率数据表",
       engine: "MYISAM",
 
       // 不用时间

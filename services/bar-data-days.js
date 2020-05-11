@@ -1,14 +1,12 @@
-// 引入刚刚建立连接mysql数据库的db.js文件
-const { sequelize, Op } = require("../config/db");
-// 引入上一步的数据表模型文件
-const BarDataDays = sequelize.import("../schema/bar_data_days");
-// 自动创建表
-// BarDatalist.sync({ force: false });
+"use strict";
+
+const { Op } = require("../models/index");
+const BarDataDaysModels = require("../models/index").getModel("bar_data_days");
 const moment = require("moment");
 
-class BarDataDaysModel {
+class BarDataDays {
   static async getHistory(symbol = "", start = 0, end = 0) {
-    return await BarDataDays.findAll({
+    return await BarDataDaysModels.findAll({
       where: {
         date: {
           [Op.lte]: moment.unix(end).format("YYYY-MM-DD"),
@@ -26,4 +24,4 @@ class BarDataDaysModel {
   //   }
 }
 
-module.exports = BarDataDaysModel;
+module.exports = BarDataDays;

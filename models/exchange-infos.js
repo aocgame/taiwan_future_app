@@ -1,6 +1,8 @@
-const { TIMESTAMP } = require("../config/db");
+"use strict";
 
-module.exports = function(sequelize, DataTypes) {
+const { TIMESTAMP } = require("./lib/data-types");
+
+module.exports = (sequelize, DataTypes) => {
   return sequelize.define(
     "exchange_infos",
     {

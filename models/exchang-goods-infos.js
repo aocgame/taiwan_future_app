@@ -1,6 +1,8 @@
-const { TIMESTAMP } = require("../config/db");
+"use strict";
 
-module.exports = function(sequelize, DataTypes) {
+const { TIMESTAMP } = require("./lib/data-types");
+
+module.exports = (sequelize, DataTypes) => {
   return sequelize.define(
     "exchange_goods_infos",
     {
@@ -83,18 +85,6 @@ module.exports = function(sequelize, DataTypes) {
         type: TIMESTAMP,
         field: "exectime_d1",
         comment: "1天进度",
-        defaultValue: false,
-      },
-      exectimeM1: {
-        type: TIMESTAMP,
-        field: "exectime_m1",
-        comment: "1个月进度",
-        defaultValue: false,
-      },
-      exectimeY1: {
-        type: TIMESTAMP,
-        field: "exectime_y1",
-        comment: "1年进度",
         defaultValue: false,
       },
       createdAt: {
